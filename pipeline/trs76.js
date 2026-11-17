@@ -18,7 +18,7 @@ const CAPS=[
 [52.4,56.8,'Roofs, bridge girders, bicycle frames: all <b>triangles</b>.'],
 [57.6,61.6,'Make the roof flatter: rise <b>1.5 m</b>. What are C and T?'],
 ];
-const CAMS=[[0,0,4.2,118],[3,0,4.0,124],[8,0,4.3,124],[12,0,4.2,128],[18,.5,4.0,116],[24,.5,4.0,116],[31,0,4.2,124],[33,-2.2,3.7,250],[43,-2.2,3.7,255],[51,-2.2,3.7,255],[53,0,4.1,120],[56.6,0,4.1,122],[58,0,5.0,124],[62,0,5.0,128],[66,0,5.0,128]];
+const CAMS=[[0,0,4.2,118],[3,0,4.0,124],[8,0,4.3,124],[12,0,4.2,128],[18,.5,4.0,116],[24,.5,4.0,116],[31,0,4.2,124],[33,-2.2,3.7,250],[43,-2.2,3.7,255],[51,-2.2,3.7,255],[53,0,4.1,120],[56.7,0,4.1,122],[57.15,0,5.0,124],[62,0,5.0,128],[66,0,5.0,128]];
 const BLUE='#3d84e0',ORG='#ff9a1a',WOOD='#b07a48';
 function arrowV(p0,p1,col,a=1,w=.11){if(a<=0)return;const A=proj(p0),B=proj(p1);const dx=B[0]-A[0],dy=B[1]-A[1],L=Math.hypot(dx,dy);if(L<4)return;const ux=dx/L,uy=dy/L,hl=Math.min(K(.34),L*.5),hw=K(.17),ww=K(w)/2;
  const nx=B[0]-ux*hl,ny=B[1]-uy*hl;g.save();g.globalAlpha=a;g.shadowColor=col;g.shadowBlur=24;g.beginPath();
@@ -106,7 +106,7 @@ function render(t){OV=[];SV=[];
  // ---- your turn ----
  const qa=sm(59.0,59.6,t)*(1-sm(61.6,62,t));
  if(qa>0){dimV(0,YS+.12,YS+rise-.12,'rise 1.5 m','#ffd36b',qa);chip([-1.6,YS+rise/2+.45],'C = ?','wh big',qa,0);chip([0,YS-.12],'T = ?','am big',qa,'below')}
- if(t>57.2&&t<62){const a=sm(57.2,57.6,t)*(1-sm(61.6,62,t));OV.push(`<div id="q" style="top:500px;opacity:${a}">Rise 3 m → 1.5 m:<br>C = <span>?</span>&nbsp; T = <span>?</span></div>`)}
+ if(t>57.3&&t<62){const a=sm(57.3,57.7,t)*(1-sm(61.6,62,t));OV.push(`<div id="q" style="top:500px;opacity:${a}">Rise 3 m → 1.5 m:<br>C = <span>?</span>&nbsp; T = <span>?</span></div>`)}
  // ---- overlays & fx ----
  OV.unshift(`<div id="top" style="opacity:${t<62?1:0}"><span>TRUSS · METHOD OF JOINTS</span></div>`);
  OV.push(caption(t));hook(t);
