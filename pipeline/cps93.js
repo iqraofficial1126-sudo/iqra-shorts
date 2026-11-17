@@ -57,7 +57,7 @@ function render(t){OV=[];SV=[];
   rod(BXY[0],BXY[1],sm(3.2,3.7,t)*(1-atB));rod(AXY[0],AXY[1],sm(3.4,3.9,t)*atB);
   const sx=lerp(AXY[0],BXY[0],atB),sy=lerp(AXY[1],BXY[1],atB);tripod(sx,sy,sm(3.2,3.7,t));
   figure(sx-.55,sy-.05,1,{shirt:C.you,a:sm(3.2,3.7,t),walk:atB>0&&atB<1?t*8:undefined});
-  chip([AXY[0],AXY[1]-.35],'A','wh big',sm(3.4,3.9,t),'below');chip([BXY[0],BXY[1]-.35],'B','wh big',sm(3.2,3.7,t),'below');
+  chip([AXY[0],AXY[1]-.35],'A','wh big',sm(3.4,3.9,t)*(1-sm(61.6,62,t)),'below');chip([BXY[0],BXY[1]-.35],'B','wh big',sm(3.2,3.7,t)*(1-sm(61.6,62,t)),'below');
   // dial readings
   const fbA=sm(5.6,8.4,t);const bbA=sm(12.6,14.8,t);const devB=sm(23.4,24.4,t)*LA_B;
   if(t<10.4){dial(540,1120,140,0,FB*fbA,FB*fbA,sm(5,5.5,t)*(1-sm(10,10.4,t)),fbA>.99?`FB = ${FB}°`:'')}
