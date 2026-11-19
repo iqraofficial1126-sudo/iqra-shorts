@@ -1,0 +1,120 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#15171A;overflow:hidden}svg{display:block}
+</style></head><body>
+<svg id="v" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const CU=window.CUES||{};
+const S=CU.S, T_END=S[S.length-1];
+const INK='#15171A',IV='#F4F2EE',OR='#FF5A2A',TE='#3DD6C6',AM='#FFB020',BD='#1F3B30',CH='#EDEBE3',DIM='#9FB3A8',RD='#ff7a6a';
+const cl=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const sm=(a,b,t)=>{const x=cl((t-a)/(b-a));return x*x*(3-2*x)};
+const sub=s=>`<tspan baseline-shift="sub" font-size="68%">${s}</tspan>`;
+const sup=s=>`<tspan baseline-shift="super" font-size="68%">${s}</tspan>`;
+let G=[];
+const txt=(x,y,s,o={})=>{if((o.o??1)<=0)return;G.push(`<text x="${x}" y="${y}" fill="${o.c||CH}" font-family="Inter" font-weight="${o.w||600}" font-size="${o.s||40}" text-anchor="${o.a||'start'}" opacity="${o.o??1}">${s}</text>`)};
+const ln=(x1,y1,x2,y2,c,w=4,o=1,d='')=>{if(o<=0)return;G.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}" opacity="${o}" stroke-linecap="round" ${d?`stroke-dasharray="${d}"`:''}/>`)};
+const pth=(d,c,w=4,o=1,f='none')=>{if(o<=0)return;G.push(`<path d="${d}" stroke="${c}" stroke-width="${w}" fill="${f}" opacity="${o}" stroke-linejoin="round" stroke-linecap="round"/>`)};
+const circ=(x,y,r,f,o=1)=>{if(o<=0)return;G.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" opacity="${o}"/>`)};
+const rect=(x,y,w,h,f,o=1,rx=0,st='')=>{if(o<=0)return;G.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${f}" opacity="${o}" ${st}/>`)};
+// a board line written left to right (a board-coloured cover slides off)
+function wline(x,y,s,t,t0,o={}){if(t0===undefined)return;const p=sm(t0,t0+.9,t);if(p<=0)return;txt(x,y,s,o);
+ if(p<1){const wd=o.wd||1500,sz=o.s||40;G.push(`<rect x="${x-6+p*(wd+12)}" y="${y-sz}" width="${wd+20}" height="${sz*1.45}" fill="${o.bg||BD}"/>`)}}
+function boxed(x,y,w,h,t,t0,c=OR){if(t0===undefined)return;const p=sm(t0,t0+.6,t);if(p>0)G.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="none" stroke="${c}" stroke-width="4" opacity="${p}" stroke-dasharray="${2*(w+h)}" stroke-dashoffset="${(1-p)*2*(w+h)}"/>`)}
+function board(){G.push(`<rect width="1920" height="1080" fill="#5b3f26"/><rect x="26" y="26" width="1868" height="1028" rx="10" fill="${BD}"/>`)}
+const TOP=['Types of errors','True error · residual','Weight','Laws of weights','Weighted mean','Least squares','Normal equations'];
+const SEC=[0,1,2,3,4,5,6,6,6,6];   // paragraph → section on the strip (P1..P10)
+function strip(cur){TOP.forEach((s,i)=>{const x=60+i*262,on=i===cur,done=i<cur;rect(x,52,246,46,on?OR:done?'#2E5747':'none',1,23,`stroke="${on?OR:'#4F7464'}" stroke-width="3"`);
+ txt(x+123,84,(done?'✓ ':'')+s,{a:'middle',s:22,w:700,c:on?INK:done?CH:DIM})})}
+function header(s,t,t0,c=AM){const p=sm(t0,t0+.5,t);txt(110,180,s,{s:58,w:800,c,o:p});ln(110,204,110+p*1000,204,c,3,.6)}
+function card(x,y,w,h,title,col,o){if(o<=0)return;rect(x,y,w,h,BD,o,18,`stroke="${col}" stroke-width="3"`);txt(x+w/2,y+58,title,{a:'middle',s:40,w:800,c:col,o})}
+function render(t){G=[];
+ const sc=i=>t>=S[i]&&t<S[i+1];const k=CU;
+ // ---------- hook ----------
+ if(t<S[1]+.4){G.push(`<rect width="1920" height="1080" fill="${INK}"/>`);const o=1-sm(S[1]-.3,S[1]+.3,t);
+  txt(960,200,'Same angle, measured three times…',{a:'middle',s:60,w:800,c:IV,o:o*sm(.2,.8,t)});
+  ['40° 20′ 10″','40° 20′ 16″','40° 20′ 13″'].forEach((s,i)=>{const p=sm(1+i*.6,1.5+i*.6,t)*o;rect(360+i*420,360,360,150,'#262A30',p,20);txt(540+i*420,455,s,{a:'middle',s:54,w:800,c:AM,o:p});txt(540+i*420,550,'reading '+(i+1),{a:'middle',s:30,c:'#9aa3ad',o:p})});
+  txt(960,700,'Which one is right?',{a:'middle',s:72,w:900,c:OR,o:o*sm(k.h_right-.2,k.h_right+.5,t)});
+  const ti=sm(k.h_title-.2,k.h_title+.6,t)*o;if(ti>0){rect(0,0,1920,1080,INK,ti*.9);txt(960,470,'Theory of Errors',{a:'middle',s:110,w:900,c:IV,o:ti});txt(960,570,'Surveying · Module 3',{a:'middle',s:50,w:700,c:OR,o:ti})}}
+ // ---------- board ----------
+ if(t>=S[1]-.05&&t<S[12]){board();const p=[1,2,3,4,5,6,7,8,9,10,11].findIndex(i=>sc(i))+1;if(p<11)strip(SEC[p-1]);
+  // P1 types of errors
+  if(p===1){header('Types of errors',t,S[1]);
+   const cs=[['Mistakes (blunders)',RD,k.e_mis,['carelessness','e.g. wrong booking','→ avoid by careful checking']],['Systematic errors',AM,k.e_sys,['follow a fixed law','e.g. long tape, temperature','same sign, cumulative','→ remove by correction']],['Accidental (random)',TE,k.e_acc,['small, + or −','compensating','follow probability laws']]];
+   cs.forEach(([ti,col,c0,lines],i)=>{const o=sm(c0-.2,c0+.5,t);card(110+i*580,280,540,560,ti,col,o);lines.forEach((l,j)=>wline(140+i*580,420+j*70,l,t,c0+.8+j*1.6,{s:34,wd:470}))});
+   const bc=sm(k.e_acc+5,k.e_acc+6,t);if(bc>0){let d='';for(let i=0;i<=60;i++){const u=-3+6*i/60;d+=(i?' L':'M')+(1540+u*70)+','+(800-110*Math.exp(-u*u/2))}pth(d,TE,4,bc)}
+   wline(110,940,'Theory of errors deals with <tspan fill="#3DD6C6">accidental errors</tspan>.',t,k.e_theory,{s:44,w:800})}
+  // P2 true error, MPV, residual
+  if(p===2){header('True error · most probable value · residual',t,S[2]);
+   const nl=sm(S[2]+.5,S[2]+1.2,t);ln(200,560,1720,560,CH,4,nl);[[600,'reading 1'],[1080,'reading 2'],[780,'reading 3']].forEach(([x,l],i)=>{circ(x,560,14,AM,nl);txt(x,610,l,{a:'middle',s:26,c:AM,o:nl})});
+   const tv=sm(k.t_true-.2,k.t_true+.5,t);ln(1000,470,1000,650,'#c9a7ff',4,tv,'10 8');txt(1000,450,'true value = ?',{a:'middle',s:32,w:800,c:'#c9a7ff',o:tv});
+   const mp=sm(k.t_mpv-.2,k.t_mpv+.5,t);ln(870,500,870,620,TE,6,mp);txt(870,700,'most probable value',{a:'middle',s:30,w:800,c:TE,o:mp});
+   wline(200,300,'True error = measured value − true value',t,k.t_err,{s:46,w:800,c:'#c9a7ff'});
+   wline(200,370,'(true value is never known exactly)',t,k.t_err+1.2,{s:32,c:DIM});
+   wline(200,800,'Residual  v = measured value − most probable value',t,k.t_res,{s:46,w:800,c:TE});boxed(180,750,1420,70,t,k.t_res+1.4,TE);
+   wline(200,900,'true error: cannot be calculated · residual: can be calculated',t,k.t_calc,{s:34,c:CH})}
+  // P3 weight
+  if(p===3){header('Weight',t,S[3]);
+   wline(110,290,'Weight = a number showing the relative reliability of an observation',t,k.w_def,{s:40});
+   wline(110,350,'higher weight → more reliable',t,k.w_high,{s:40,c:AM});
+   const ex=sm(k.w_ex-.2,k.w_ex+.5,t);if(ex>0){rect(110,410,820,250,BD,ex,16,`stroke="${TE}" stroke-width="3"`);
+    for(let i=0;i<4;i++)circ(180+i*70,490,22,TE,ex);txt(450,500,'mean of 4 readings → w = 4',{s:30,w:700,o:ex});circ(180,590,22,AM,ex);txt(450,600,'1 reading → w = 1',{s:30,w:700,o:ex})}
+   wline(1000,470,'w ∝ number of observations',t,k.w_prop,{s:40,c:TE});wline(1000,550,'w ∝ 1 / (probable error)'+sup('2'),t,k.w_prop+2.2,{s:40,c:TE});
+   wline(110,780,'good weather · good instrument · experienced observer → higher weight',t,k.w_good,{s:36,c:AM})}
+  // P4 laws of weights
+  if(p===4){header('Laws of weights',t,S[4]);
+   const L=[['1','mean of n observations of unit weight: w = n',k.l1],['2','weighted mean: w = sum of the weights',k.l2],['3','quantity × constant c: w ÷ c'+sup('2'),k.l3],['4','quantity ÷ constant c: w × c'+sup('2'),k.l4],['5','quantity ± constant: w unchanged',k.l5],['6','sum or difference: 1/w = 1/w'+sub('1')+' + 1/w'+sub('2'),k.l6],['7','equation × its own weight: new w = 1 / original w',k.l7]];
+   L.forEach(([n,s,c0],i)=>{const y=290+i*92;const o=sm(c0-.2,c0+.4,t);circ(140,y-14,26,OR,o);txt(140,y-2,n,{a:'middle',s:30,w:900,c:INK,o});wline(190,y,s,t,c0,{s:38,wd:1150})});
+   const ex=sm(k.l6ex-.2,k.l6ex+.5,t);if(ex>0){rect(1320,640,520,250,BD,ex,16,`stroke="${AM}" stroke-width="3"`);txt(1345,700,'w'+sub('1')+' = 2, w'+sub('2')+' = 3',{s:34,w:700,o:ex});wline(1345,770,'1/w = 1/2 + 1/3 = 5/6',t,k.l6ex+.6,{s:34,wd:480});wline(1345,840,'w = 6/5 = 1.2',t,k.l6ex+2.4,{s:40,w:800,c:AM,wd:480})}}
+  // P5 weighted mean
+  if(p===5){header('Weighted arithmetic mean',t,S[5]);
+   wline(110,290,'x̄ = Σwx / Σw',t,k.m_f,{s:56,w:800,c:AM});
+   const tb=sm(k.m_ex-.2,k.m_ex+.5,t);if(tb>0){const X=[200,420,640,860],H=['x (″)','w','wx','v = x − x̄'];H.forEach((h,j)=>txt(X[j],400,h,{a:'middle',s:34,w:800,c:TE,o:tb}));ln(110,420,980,420,CH,2,tb);
+    [[10,2,20,'−3.3'],[16,3,48,'+2.7'],[13,5,65,'−0.3']].forEach((r,i)=>{const o=sm(k.m_ex+.6+i*1.2,k.m_ex+1.1+i*1.2,t);r.slice(0,3).forEach((v,j)=>txt(X[j],480+i*70,String(v),{a:'middle',s:38,o}));txt(X[3],480+i*70,r[3],{a:'middle',s:38,c:AM,o:sm(k.m_res-.2,k.m_res+.4+i*.8,t)})});
+    ln(110,680,980,680,CH,2,sm(k.m_sum-.2,k.m_sum+.4,t));txt(110,730,'Σ',{s:38,w:800,o:sm(k.m_sum-.2,k.m_sum+.4,t)});txt(X[1],730,'10',{a:'middle',s:38,w:800,c:AM,o:sm(k.m_sw-.2,k.m_sw+.4,t)});txt(X[2],730,'133',{a:'middle',s:38,w:800,c:AM,o:sm(k.m_sum-.2,k.m_sum+.4,t)})}
+   wline(1060,480,'x̄ = 133 / 10 = 13.3″',t,k.m_mean,{s:46,w:800,c:AM,wd:780});boxed(1040,430,560,70,t,k.m_mean+1,AM);
+   wline(1060,570,'weight of the mean = 10 (law 2)',t,k.m_mean+1.6,{s:36,wd:780});
+   wline(1060,700,'check: Σwv = −6.6 + 8.1 − 1.5 = 0 ✓',t,k.m_chk,{s:36,c:TE,wd:780})}
+  // P6 least squares
+  if(p===6){header('Principle of least squares',t,S[6]);
+   wline(110,300,'most probable value → Σwv'+sup('2')+' is minimum',t,k.ls_def,{s:50,w:800,c:AM});
+   const pl=sm(k.ls_def+1,k.ls_def+2.4,t);if(pl>0){const x0=1100,y0=900;ln(x0,y0,x0+700,y0,CH,3,pl);ln(x0,y0,x0,y0-480,CH,3,pl);let d='';for(let i=0;i<=40;i++){const u=i/40;d+=(i?' L':'M')+(x0+40+u*620)+','+(y0-60-380*Math.pow(u-.5,2)*4)}pth(d,AM,5,pl);
+    circ(x0+350,y0-60,14,TE,pl);txt(x0+350,y0+44,'MPV',{a:'middle',s:30,w:800,c:TE,o:pl});txt(x0-14,y0-450,'Σwv'+sup('2'),{a:'end',s:30,c:DIM,o:pl});txt(x0+700,y0+44,'trial value',{a:'end',s:28,c:DIM,o:pl})}
+   wline(110,450,'equal weights → simple arithmetic mean',t,k.ls_eq,{s:40,wd:900});
+   wline(110,560,'more than one unknown →',t,k.ls_ne,{s:40,wd:900});wline(110,630,'normal equations',t,k.ls_ne+1,{s:52,w:800,c:TE,wd:900})}
+  // P7–P10 the x, y example (kept on the left of the board)
+  if(p>=7&&p<=10){header('Most probable values of x and y',t,S[7],TE);
+   const tb=sm(S[7]+.4,S[7]+1,t);const R=[['x','24° 24′ 20″','1',k.x_obs],['y','30° 18′ 40″','2',k.y_obs],['x + y','54° 43′ 20″','1',k.s_obs]];
+   txt(130,290,'observed',{s:30,c:DIM,o:tb});txt(560,290,'weight',{s:30,c:DIM,o:tb});
+   R.forEach(([n,v,w,c0],i)=>{const o=sm(c0-.2,c0+.5,t);txt(130,360+i*70,n+' = '+v,{s:40,w:700,o});txt(600,360+i*70,w,{s:40,w:800,c:AM,o,a:'middle'})});
+   wline(130,600,'x + y computed = 54° 43′ 00″ → 20″ less',t,k.s_disc,{s:32,c:RD,wd:700});
+   wline(130,680,'seconds only:',t,k.s_sec,{s:32,c:DIM,wd:700});
+   wline(130,740,'x = 20,  y = 40,  x + y = 80',t,k.s_sec+.8,{s:40,w:800,c:TE,wd:700});
+   wline(130,800,'(80″ above 54° 42′)',t,k.s_sec+3.5,{s:28,c:DIM,wd:700});
+   ln(860,250,860,1000,'#2F5244',3);
+   const R0=920;
+   if(p===8){wline(R0,290,'Normal equation for x:',t,k.n_rule,{s:36,w:800,c:AM,wd:950});wline(R0,345,'multiply each equation containing x by',t,k.n_rule+1,{s:30,wd:950});wline(R0,390,'(coefficient of x) × (its weight), then add',t,k.n_rule+2,{s:30,wd:950});
+    wline(R0,480,'x = 20',t,k.n_x,{s:38,wd:950});wline(R0,535,'x + y = 80',t,k.n_x+1.2,{s:38,wd:950});wline(R0,600,'2x + y = 100',t,k.n_x1,{s:46,w:800,c:TE,wd:950});boxed(R0-20,555,380,62,t,k.n_x1+1,TE);
+    wline(R0,700,'Normal equation for y (weight 2):',t,k.n_y,{s:34,w:800,c:AM,wd:950});wline(R0,755,'2y = 80',t,k.n_y+1.4,{s:38,wd:950});wline(R0,810,'x + y = 80',t,k.n_y+2.4,{s:38,wd:950});wline(R0,875,'x + 3y = 160',t,k.n_y1,{s:46,w:800,c:TE,wd:950});boxed(R0-20,830,380,62,t,k.n_y1+1,TE)}
+   if(p===9){txt(R0,290,'2x + y = 100   ·   x + 3y = 160',{s:36,w:800,c:TE});wline(R0,370,'y = 100 − 2x',t,k.v_y,{s:40,wd:950});wline(R0,440,'x + 300 − 6x = 160',t,k.v_sub,{s:40,wd:950});wline(R0,510,'−5x = −140   →   x = 28',t,k.v_sub+2.4,{s:40,w:800,c:AM,wd:950});
+    wline(R0,580,'y = 100 − 56 = 44',t,k.v_ysol,{s:40,w:800,c:AM,wd:950});
+    wline(R0,680,'x = 24° 24′ 28″',t,k.v_mpv,{s:44,w:800,c:TE,wd:950});wline(R0,745,'y = 30° 18′ 44″',t,k.v_mpv+2.2,{s:44,w:800,c:TE,wd:950});wline(R0,810,'x + y = 54° 43′ 12″',t,k.v_mpv+4.2,{s:44,w:800,c:TE,wd:950});boxed(R0-20,630,560,210,t,k.v_mpv+5,OR)}
+   if(p===10){txt(R0,290,'v = observed − most probable',{s:34,w:800,c:AM});
+    [['x','20 − 28 = −8″',k.r_x],['y','40 − 44 = −4″',k.r_y],['x + y','80 − 72 = +8″',k.r_s]].forEach(([n,s,c0],i)=>wline(R0,370+i*65,'v('+n+') = '+s,t,c0,{s:38,wd:950}));
+    wline(R0,590,'highest weight (y) → smallest correction',t,k.r_inv,{s:32,c:TE,wd:950});wline(R0,640,'correction ∝ 1 / weight',t,k.r_inv+2,{s:32,c:TE,wd:950});
+    wline(R0,740,'Σwv'+sup('2')+' = 64 + 2×16 + 64 = 160',t,k.r_sum,{s:40,w:800,c:AM,wd:950});wline(R0,810,'any other values give more → least squares',t,k.r_min,{s:32,wd:950});boxed(R0-20,695,620,70,t,k.r_sum+1.4,AM)}}
+  // P11 summary
+  if(p===11){txt(960,170,'Summary',{a:'middle',s:64,w:900,c:AM});
+   const L=[['Errors','mistakes · systematic · accidental'],['True error','measured − true value'],['Residual','measured − most probable value'],['Weight','relative reliability · laws of weights'],['Weighted mean','Σwx / Σw'],['Least squares','Σwv'+sup('2')+' → minimum'],['Normal equation','coefficient × weight × equation, then add']];
+   L.forEach(([a,b],i)=>{const o=sm(k.sum+i*1.3,k.sum+.5+i*1.3,t);txt(260,280+i*86,a,{s:40,w:800,c:TE,o});txt(720,280+i*86,b,{s:38,o})});
+   ['Triangulation','Levelling networks','Traverse adjustment'].forEach((s,i)=>{const o=sm(k.sum_app+i*.6,k.sum_app+.5+i*.6,t);rect(330+i*440,920,400,80,'#2E5747',o,40);txt(530+i*440,972,s,{a:'middle',s:34,w:700,o})})}}
+ // ---------- your turn ----------
+ if(t>=S[12]-.05&&t<k.end+.4){const o=sm(S[12]-.05,S[12]+.4,t)*(1-sm(k.end-.2,k.end+.4,t));G.push(`<rect width="1920" height="1080" fill="${BD}" opacity="${o}"/>`);
+  txt(960,200,'YOUR TURN',{a:'middle',s:80,w:900,c:OR,o});txt(960,420,'Same angles, but all three with equal weights:',{a:'middle',s:48,w:700,o});
+  txt(960,540,'most probable value of x = ?',{a:'middle',s:72,w:900,c:AM,o})}
+ // ---------- end card ----------
+ if(t>=k.end-.2){const e=sm(k.end-.2,k.end+.4,t);rect(0,0,1920,1080,INK,e);G.push(`<image href="../wm/iqra_big.png" x="${960-267}" y="260" width="534" height="192" opacity="${e}"/>`);
+  txt(960,560,'Engineering Guide · Surveying',{a:'middle',s:70,w:900,c:IV,o:e});const lk=sm(k.end+.5,k.end+1.1,t);rect(560,640,800,150,OR,lk,75);txt(960,712,'Like &amp; Subscribe',{a:'middle',s:56,w:900,c:'#fff',o:lk});txt(960,762,'for more Engineering Guide videos',{a:'middle',s:34,w:600,c:'#fff',o:lk})}
+ G.push(`<rect x="0" y="1072" width="${cl(t/T_END)*1920}" height="8" fill="${OR}"/>`);
+ document.getElementById('v').innerHTML=G.join('');return true}
+window.renderAt=render;
+</script></body></html>
