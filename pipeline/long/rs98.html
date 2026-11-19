@@ -1,0 +1,121 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#15171A;overflow:hidden}svg{display:block}
+</style></head><body>
+<svg id="v" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const CU=window.CUES||{};
+const S=CU.S, T_END=S[S.length-1];
+const INK='#15171A',IV='#F4F2EE',OR='#FF5A2A',TE='#3DD6C6',AM='#FFB020',SKY='#0E1B33',DIM='#8FA0B8',GR='#5CB85C',WA='#2F7FD0',SO='#B98B5A';
+const cl=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const sm=(a,b,t)=>{const x=cl((t-a)/(b-a));return x*x*(3-2*x)};
+const sub=s=>`<tspan baseline-shift="sub" font-size="68%">${s}</tspan>`;
+let G=[];
+const txt=(x,y,s,o={})=>{if((o.o??1)<=0)return;G.push(`<text x="${x}" y="${y}" fill="${o.c||IV}" font-family="Inter" font-weight="${o.w||600}" font-size="${o.s||36}" text-anchor="${o.a||'start'}" opacity="${o.o??1}">${s}</text>`)};
+const ln=(x1,y1,x2,y2,c,w=4,o=1,d='')=>{if(o<=0)return;G.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}" opacity="${o}" stroke-linecap="round" ${d?`stroke-dasharray="${d}"`:''}/>`)};
+const pth=(d,c,w=4,o=1,f='none',dash='')=>{if(o<=0)return;G.push(`<path d="${d}" stroke="${c}" stroke-width="${w}" fill="${f}" opacity="${o}" stroke-linejoin="round" stroke-linecap="round" ${dash?`stroke-dasharray="${dash}"`:''}/>`)};
+const circ=(x,y,r,f,o=1,st='')=>{if(o<=0)return;G.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" opacity="${o}" ${st}/>`)};
+const rect=(x,y,w,h,f,o=1,rx=0,st='')=>{if(o<=0)return;G.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${f}" opacity="${o}" ${st}/>`)};
+function arrow(x1,y1,x2,y2,c,w=5,o=1,p=1){if(o<=0||p<=0)return;x2=x1+(x2-x1)*p;y2=y1+(y2-y1)*p;const a=Math.atan2(y2-y1,x2-x1),h=w*3.2;
+ ln(x1,y1,x2-Math.cos(a)*h*.8,y2-Math.sin(a)*h*.8,c,w,o);
+ G.push(`<path d="M${x2},${y2} L${x2-h*Math.cos(a)+h*.6*Math.sin(a)},${y2-h*Math.sin(a)-h*.6*Math.cos(a)} L${x2-h*Math.cos(a)-h*.6*Math.sin(a)},${y2-h*Math.sin(a)+h*.6*Math.cos(a)}Z" fill="${c}" opacity="${o}"/>`)}
+function chip(x,y,s,c,o,size=30){if(o<=0)return;const w=s.replace(/<[^>]+>/g,'').length*size*.56+36;G.push(`<g opacity="${o}"><rect x="${x-w/2}" y="${y-size*.95}" width="${w}" height="${size*1.45}" rx="${size*.7}" fill="rgba(8,13,26,.85)" stroke="${c}" stroke-width="3"/></g>`);txt(x,y,s,{a:'middle',s:size,w:700,c,o})}
+const k=(key,d=.5)=>sm(CU[key]-.15,CU[key]-.15+d,0);    // placeholder (overwritten in render)
+// ---------- the process diagram (left part) ----------
+const SUN=[190,215], SAT=[1040,165], STN=[1130,900];
+const FLD=[[160,420,GR,'vegetation'],[440,700,WA,'water'],[720,1000,SO,'soil']];  // ground strips x0,x1
+const GY=900;
+function sat(x,y,o,s=1){if(o<=0)return;G.push(`<g opacity="${o}" transform="translate(${x},${y}) scale(${s})"><rect x="-34" y="-22" width="68" height="44" rx="6" fill="#c9ced6"/><rect x="-140" y="-16" width="96" height="32" fill="#3d84e0"/><rect x="44" y="-16" width="96" height="32" fill="#3d84e0"/><line x1="-44" y1="0" x2="44" y2="0" stroke="#c9ced6" stroke-width="4"/><circle cx="0" cy="30" r="10" fill="#2b303c"/></g>`)}
+function sun(o,glow=0){if(o<=0)return;circ(...SUN,70+glow*10,'#FFC244',o);circ(...SUN,110+glow*25,'#FFC244',o*.18);for(let i=0;i<12;i++){const a=i*Math.PI/6;ln(SUN[0]+Math.cos(a)*85,SUN[1]+Math.sin(a)*85,SUN[0]+Math.cos(a)*(110+glow*14),SUN[1]+Math.sin(a)*(110+glow*14),'#FFC244',6,o)}}
+function ground(o){if(o<=0)return;rect(60,GY,1180,150,'#2a3a24',o);for(const[x0,x1,c]of FLD){rect(x0,GY-8,x1-x0,40,c,o,6)}
+ for(let x=180;x<400;x+=34){pth(`M${x},${GY-8} l8,-26 l8,26`,'#3e9a4a',4,o)}}
+function atm(o,t){if(o<=0)return;G.push(`<rect x="60" y="360" width="1180" height="150" fill="url(#hz)" opacity="${o}"/>`);txt(80,400,'atmosphere',{s:26,c:'#9fd3f0',o})}
+function station(o){if(o<=0)return;const[x,y]=STN;pth(`M${x-50},${y-10} Q${x},${y-90} ${x+50},${y-10}Z`,'#c9ced6',4,o,'#8a929c');ln(x,y-10,x,y+40,'#c9ced6',8,o);rect(x-40,y+40,80,16,'#8a929c',o,4)}
+function ray(x1,y1,x2,y2,c,o,p,dash=''){if(o<=0)return;arrow(x1,y1,x2,y2,c,5,o,p)}
+// ---------- right panel ----------
+const PX=1270,PY=150,PW=620,PH=820;
+function panel(o,title,col=AM){if(o<=0)return;rect(PX,PY,PW,PH,'rgba(8,13,26,.78)',o,24,`stroke="${col}" stroke-width="3"`);txt(PX+30,PY+60,title,{s:34,w:800,c:col,o})}
+const STEPS=[['A','Energy source'],['B','Atmosphere'],['C','Target'],['D','Sensor'],['E','Transmission'],['F','Interpretation'],['G','Application']];
+function strip(t,cur,o){if(o<=0)return;STEPS.forEach(([L,n],i)=>{const x=110+i*250,on=i===cur,done=i<cur;const p=sm(CU.intro+.3+i*.25,CU.intro+.6+i*.25,t);
+ rect(x,30,220,52,on?OR:done?'#24456b':'rgba(255,255,255,.06)',o*p,26,`stroke="${on?OR:'#3a557a'}" stroke-width="2"`);txt(x+26,66,L,{s:30,w:900,c:on?INK:AM,o:o*p});txt(x+58,65,n,{s:22,w:700,c:on?INK:IV,o:o*p})})}
+function wline(x,y,s,t,t0,o={}){const p=sm(t0,t0+.7,t);if(p<=0)return;txt(x,y,s,{...o,o:(o.o??1)*p})}
+function render(t){G=[`<defs><linearGradient id="hz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd3f0" stop-opacity="0"/><stop offset=".5" stop-color="#9fd3f0" stop-opacity=".22"/><stop offset="1" stop-color="#9fd3f0" stop-opacity="0"/></linearGradient>
+ <linearGradient id="sp" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7b3fe4"/><stop offset=".15" stop-color="#2f7fd0"/><stop offset=".28" stop-color="#5cb85c"/><stop offset=".4" stop-color="#ffc244"/><stop offset=".5" stop-color="#e8392b"/><stop offset=".62" stop-color="#7a1f1f"/><stop offset="1" stop-color="#2b303c"/></linearGradient></defs>`];
+ const bgG=`<rect width="1920" height="1080" fill="${SKY}"/>`;G.push(bgG);for(let i=0;i<90;i++)circ((i*233)%1920,(i*137)%1080,1.6,'#ffffff',.5);
+ const sc=i=>t>=S[i]&&t<S[i+1];const cur=[3,4,5,6,7,8,9].findIndex(i=>sc(i));
+ // ---- hook ----
+ if(t<S[1]+.6){const o=1-sm(S[1]-.3,S[1]+.4,t);pth(`M-100,1180 Q960,620 2020,1180`,'#2f7fd0',0,o,'#1d5f9e');pth(`M-100,1180 Q960,620 2020,1180`,'#9fd3f0',5,o);
+  const a=t*.25;sat(960+700*Math.cos(a+2.2),520-260*Math.sin(a+2.2)*.4,o);
+  const fo=sm(CU.h_field-.2,CU.h_field+.5,t)*o;pth(`M820,820 L1100,820 L1060,760 L860,760Z`,'#5cb85c',3,fo,'#4f9a55');txt(960,880,'paddy field: healthy?',{a:'middle',s:34,w:700,c:GR,o:fo});
+  const lo=sm(CU.h_lake-.2,CU.h_lake+.5,t)*o;G.push(`<ellipse cx="560" cy="800" rx="150" ry="40" fill="${WA}" opacity="${lo}"/>`);txt(560,880,'lake: polluted?',{a:'middle',s:34,w:700,c:'#9fd3f0',o:lo});
+  txt(960,150,'How can a satellite ~700 km up see this,',{a:'middle',s:52,w:800,o:o*sm(.2,.8,t)});txt(960,215,'without touching the ground?',{a:'middle',s:52,w:800,o:o*sm(1.2,1.8,t)});
+  const ti=sm(CU.h_title-.2,CU.h_title+.6,t)*o;if(ti>0){rect(0,0,1920,1080,INK,ti*.85);txt(960,500,'REMOTE SENSING',{a:'middle',s:120,w:900,c:IV,o:ti});txt(960,590,'what it is · its 7 components · how it works',{a:'middle',s:44,w:700,c:OR,o:ti})}}
+ // ---- definition + spectrum ----
+ if(t>=S[1]-.3&&t<S[2]+.4){const o=sm(S[1]-.3,S[1]+.3,t)*(1-sm(S[2]-.3,S[2]+.4,t));
+  txt(960,170,'Remote sensing',{a:'middle',s:72,w:900,c:AM,o});
+  wline(260,280,'getting information about an object',t,CU.d_def,{s:44,w:700,o});wline(260,340,'<tspan fill="#3DD6C6">without physical contact</tspan>, by measuring',t,CU.d_def+1.2,{s:44,w:700,o});wline(260,400,'the <tspan fill="#FFB020">electromagnetic radiation</tspan> coming from it',t,CU.d_def+2.4,{s:44,w:700,o});
+  const ey=sm(CU.d_eye-.2,CU.d_eye+.5,t)*o;if(ey>0){G.push(`<g opacity="${ey}"><ellipse cx="420" cy="560" rx="110" ry="58" fill="#fff"/><circle cx="420" cy="560" r="40" fill="#3d84e0"/><circle cx="420" cy="560" r="18" fill="#111"/></g>`);txt(420,670,'our eye: a remote sensor too',{a:'middle',s:32,w:700,o:ey})}
+  const ir=sm(CU.d_ir-.2,CU.d_ir+.5,t)*o;sat(1450,560,ir,1.1);txt(1450,670,'satellite sensors: + infrared, microwave',{a:'middle',s:32,w:700,c:TE,o:ir});
+  const sp=sm(CU.d_spec-.2,CU.d_spec+.8,t)*o;if(sp>0){rect(160,780,1600,70,'url(#sp)',sp,14);const B=[['visible',160,420],['near infrared',420,760],['thermal infrared',760,1250],['microwave',1250,1760]];
+   B.forEach(([n,a,b],i)=>{const q=sm(CU.d_spec+.4+i*.5,CU.d_spec+.9+i*.5,t)*o;ln(a,770,a,870,'#fff',3,q);txt((a+b)/2,910,n,{a:'middle',s:32,w:800,c:[AM,'#ff8a6a','#e8392b',TE][i],o:q})});txt(960,980,'each band tells something different',{a:'middle',s:32,c:DIM,o:sm(CU.d_band-.2,CU.d_band+.5,t)*o})}}
+ // ---- the diagram, A to G ----
+ if(t>=S[2]-.3&&t<S[10]+.3){const o=sm(S[2]-.3,S[2]+.4,t)*(1-sm(S[10]-.3,S[10]+.3,t));
+  strip(t,cur,o);
+  const sa=o*sm(S[2]+.2,S[2]+.8,t);ground(sa);sat(...SAT,sa);station(sa*(t>S[7]-.2?1:.35));sun(sa,t>=S[3]&&t<S[4]?.5+.5*Math.sin(t*4):0);
+  FLD.forEach(([a,b,c,n])=>txt((a+b)/2,GY+90,n,{a:'middle',s:28,w:700,c:IV,o:sa}));txt(SAT[0],SAT[1]-50,'sensor',{a:'middle',s:26,c:DIM,o:sa});txt(SUN[0],SUN[1]+150,'sun',{a:'middle',s:28,c:AM,o:sa});
+  // A: rays from the sun to the ground
+  const ra=sm(CU.a_sun,CU.a_sun+1.5,t)*o;for(const[x0,x1]of FLD.map(f=>[f[0],f[1]]))ray(SUN[0]+60,SUN[1]+60,(x0+x1)/2,GY-14,AM,ra*.9,ra);
+  // B: atmosphere, scatter and absorb
+  const at=sm(S[4]-.1,S[4]+.6,t)*o;atm(at,t);const scat=sm(CU.b_scat-.2,CU.b_scat+.8,t)*o;if(scat>0){for(const[x,y,dx,dy]of[[430,430,-60,-50],[520,420,70,-40],[600,450,-40,60]])arrow(x,y,x+dx,y+dy,'#9fd3f0',4,scat);
+   chip(330,560,'scatter','#9fd3f0',scat,26);circ(760,440,14,'#e8392b',scat);chip(760,560,'absorb','#e8392b',scat*sm(CU.b_abs-.2,CU.b_abs+.5,t),26)}
+  // C: reflect / absorb / transmit at the target
+  const ct=sm(CU.c_ref-.2,CU.c_ref+.8,t)*o*(1-sm(S[6]-.2,S[6]+.4,t));if(ct>0){arrow(290,GY-20,380,GY-210,GR,5,ct);arrow(570,GY-20,600,GY-90,WA,5,ct*.5);circ(570,GY+10,12,'#e8392b',ct);chip(290,GY-250,'reflect',GR,ct,26);chip(570,GY-140,'absorb','#e8392b',ct,26);arrow(620,GY-30,640,GY+26,'#9fd3f0',4,ct*sm(CU.c_ref+.8,CU.c_ref+1.3,t));chip(700,GY-70,'transmit','#9fd3f0',ct*sm(CU.c_ref+.8,CU.c_ref+1.3,t),26)}
+  // D: reflected energy goes up to the sensor
+  const dr=sm(CU.d_rec-.2,CU.d_rec+1.4,t)*o;for(const[x0,x1]of FLD.map(f=>[f[0],f[1]]))ray((x0+x1)/2,GY-20,SAT[0]-20,SAT[1]+40,TE,dr*.9,dr);
+  const pulse=sm(CU.d_act-.2,CU.d_act+.4,t)*o*(1-sm(S[7]-.2,S[7]+.3,t));if(pulse>0){const u=((t-CU.d_act)*.6)%1;arrow(SAT[0]+40,SAT[1]+40,SAT[0]-200+400*0,GY-20,OR,6,pulse,u)}
+  // E: downlink to the ground station
+  const dl=sm(CU.e_tx-.2,CU.e_tx+.8,t)*o;if(dl>0){for(let i=0;i<4;i++){const u=((t*1.2+i*.25)%1);circ(SAT[0]+(STN[0]-SAT[0])*u,SAT[1]+(STN[1]-80-SAT[1])*u,8,AM,dl)}ln(SAT[0],SAT[1],STN[0],STN[1]-80,AM,2,dl*.6,'10 8');chip(STN[0]-20,STN[1]-140,'ground station',AM,dl,26)}
+  // ---- right panel per component ----
+  const pp=i=>sm(S[i]+.2,S[i]+.7,t)*(1-sm(S[i+1]-.3,S[i+1]+.1,t))*o;
+  let q=pp(3);panel(q,'A · Energy source');wline(PX+30,PY+140,'Energy must reach the target first.',t,CU.a_need,{s:28,o:q});wline(PX+30,PY+200,'Most often: the <tspan fill="#FFB020">sun</tspan>.',t,CU.a_sun,{s:28,o:q});
+  q=pp(4);panel(q,'B · Radiation & atmosphere','#9fd3f0');wline(PX+30,PY+140,'sun → target → sensor:',t,CU.b_path,{s:28,o:q});wline(PX+30,PY+190,'both trips cross the atmosphere',t,CU.b_path+.6,{s:28,o:q});
+  wline(PX+30,PY+260,'some energy <tspan fill="#9fd3f0">scatters</tspan>, some is <tspan fill="#e8392b">absorbed</tspan>',t,CU.b_scat,{s:26,o:q});
+  const wn=sm(CU.b_win-.2,CU.b_win+.8,t)*q;if(wn>0){const x0=PX+40,y0=PY+700,w=PW-80,h=300;ln(x0,y0,x0+w,y0,'#fff',3,wn);let d=`M${x0},${y0}`;const T=[.1,.85,.9,.2,.8,.85,.15,.7,.1,.05,.75,.9,.92];T.forEach((v,i)=>{d+=` L${x0+w*i/(T.length-1)},${y0-h*v}`});pth(d,'#9fd3f0',4,wn);
+   for(const[a,b]of[[1,2.4],[4,5.3],[10,12]])rect(x0+w*a/12,y0-h,w*(b-a)/12,h,AM,wn*.18);txt(x0,y0+40,'wavelength →',{s:26,c:DIM,o:wn});txt(x0,y0-h-14,'how much passes',{s:26,c:DIM,o:wn});chip(PX+PW/2,PY+330,'atmospheric windows',AM,wn,30)}
+  q=pp(5);panel(q,'C · Interaction with the target',GR);wline(PX+30,PY+130,'reflect · absorb · transmit',t,CU.c_ref,{s:26,o:q});wline(PX+30,PY+180,'each material reflects differently',t,CU.c_sig,{s:26,o:q});wline(PX+30,PY+222,'at each wavelength = <tspan fill="#FFB020">spectral signature</tspan>',t,CU.c_sig+.6,{s:26,o:q});
+  const cs=sm(CU.c_sig+.6,CU.c_sig+1.4,t)*q;if(cs>0){const x0=PX+70,y0=PY+770,w=PW-110,h=390;const X=l=>x0+w*(l-.4)/2.1,Y=r=>y0-h*r/.6;
+   ln(x0,y0,x0+w,y0,'#fff',3,cs);ln(x0,y0,x0,y0-h,'#fff',3,cs);txt(x0+w,y0+62,'wavelength (µm)',{a:'end',s:24,c:DIM,o:cs});txt(x0-10,y0-h-70,'reflectance',{s:24,c:DIM,o:cs});
+   for(const v of[.5,1.0,1.5,2.0,2.5]){txt(X(v),y0+30,v.toFixed(1),{a:'middle',s:22,c:DIM,o:cs})}rect(X(.4),y0-h,X(.7)-X(.4),h,'url(#sp)',cs*.15);txt(X(.55),y0-h-40,'visible',{a:'middle',s:22,c:DIM,o:cs});txt(X(1.0),y0-h-40,'near infrared',{a:'middle',s:22,c:DIM,o:cs});
+   const curve=(pts,c,o2)=>{let d='';pts.forEach(([l,r],i)=>d+=(i?' L':'M')+X(l)+','+Y(r));pth(d,c,6,o2)};
+   const vg=sm(CU.c_veg-.2,CU.c_veg+.8,t)*cs;curve([[.4,.04],[.45,.05],[.55,.12],[.62,.07],[.67,.05],[.7,.1],[.75,.42],[.9,.5],[1.1,.48],[1.3,.44],[1.4,.3],[1.45,.22],[1.6,.33],[1.8,.3],[1.9,.12],[1.95,.08],[2.2,.18],[2.5,.1]],GR,vg);
+   chip(X(.55),Y(.12)-26,'green peak',GR,vg*sm(CU.c_green,CU.c_green+.6,t),22);chip(X(1.0),Y(.5)-26,'high NIR',GR,vg*sm(CU.c_nir,CU.c_nir+.6,t),24);
+   const wa=sm(CU.c_wat-.2,CU.c_wat+.8,t)*cs;curve([[.4,.08],[.5,.07],[.6,.05],[.7,.03],[.8,.01],[1.0,.0],[2.5,0]],'#5fb3e8',wa);chip(X(1.3),Y(.02)-24,'water: absorbs NIR','#5fb3e8',wa,22);
+   const so=sm(CU.c_soil-.2,CU.c_soil+.8,t)*cs;curve([[.4,.08],[.6,.16],[.8,.22],[1.2,.28],[1.6,.33],[1.9,.3],[2.2,.34],[2.5,.32]],SO,so);chip(X(2.0),Y(.34)-26,'soil',SO,so,24)}
+  q=pp(6);panel(q,'D · Recording by the sensor',TE);wline(PX+30,PY+130,'the sensor collects and records energy',t,CU.d_rec,{s:26,o:q});
+  const pa=sm(CU.d_pas-.2,CU.d_pas+.6,t)*q;if(pa>0){rect(PX+30,PY+180,PW-60,280,'rgba(255,194,68,.08)',pa,16);txt(PX+50,PY+225,'PASSIVE',{s:32,w:900,c:AM,o:pa});txt(PX+50,PY+270,'records natural energy,',{s:28,o:pa});txt(PX+50,PY+310,'e.g. reflected sunlight',{s:28,o:pa});txt(PX+50,PY+360,'example: optical cameras',{s:28,c:AM,o:pa});circ(PX+PW-90,PY+300,40,'#FFC244',pa)}
+  const ac=sm(CU.d_act-.2,CU.d_act+.6,t)*q;if(ac>0){rect(PX+30,PY+490,PW-60,300,'rgba(255,90,42,.08)',ac,16);txt(PX+50,PY+535,'ACTIVE',{s:32,w:900,c:OR,o:ac});txt(PX+50,PY+580,'sends its own microwave pulse,',{s:28,o:ac});txt(PX+50,PY+620,'records the echo',{s:28,o:ac});txt(PX+50,PY+670,'example: radar',{s:28,c:OR,o:ac});
+   const nt=sm(CU.d_night-.2,CU.d_night+.6,t)*ac;txt(PX+50,PY+745,'works at night and through clouds',{s:28,w:800,c:TE,o:nt});circ(PX+PW-100,PY+620,34,'#dfe6f0',nt);circ(PX+PW-86,PY+610,30,'rgba(8,13,26,1)',nt)}
+  q=pp(7);panel(q,'E · Transmission & processing',AM);wline(PX+30,PY+130,'data sent electronically',t,CU.e_tx,{s:26,o:q});wline(PX+30,PY+175,'to a ground receiving station',t,CU.e_tx+.6,{s:26,o:q});
+  const im=sm(CU.e_img-.2,CU.e_img+1.2,t)*q;if(im>0){const x0=PX+90,y0=PY+260,s=400,n=10;for(let i=0;i<n;i++)for(let j=0;j<n;j++){const v=((i*7+j*13)%10)/10,u=sm(CU.e_img+(i+j)*.04,CU.e_img+.4+(i+j)*.04,t);const c=j<4&&i>5?WA:(i+j)%3?GR:SO;rect(x0+i*s/n,y0+j*s/n,s/n-2,s/n-2,u>.6?c:`rgba(255,255,255,${.1+v*.3})`,q*Math.max(.3,u))}
+   chip(PX+PW/2,PY+720,'processed into an image',AM,im,28)}
+  q=pp(8);panel(q,'F · Interpretation & analysis','#c9a7ff');wline(PX+30,PY+130,'visual or digital interpretation',t,CU.f_int,{s:26,o:q});
+  const lu=sm(CU.f_lu-.2,CU.f_lu+.8,t)*q;if(lu>0){const x0=PX+90,y0=PY+200,s=400;pth(`M${x0},${y0} h${s} v${s} h${-s}Z`,'#fff',3,lu,'#2a3a24');pth(`M${x0},${y0+40} C${x0+150},${y0+120} ${x0+250},${y0+60} ${x0+s},${y0+160} L${x0+s},${y0+230} C${x0+250},${y0+140} ${x0+150},${y0+200} ${x0},${y0+110}Z`,'none',0,lu,WA);
+   rect(x0+30,y0+250,150,120,'#9aa3ad',lu,6);rect(x0+220,y0+260,150,110,GR,lu,6);rect(x0+40,y0+150,120,60,SO,lu,6);
+   [['water',WA],['vegetation',GR],['built-up','#9aa3ad'],['soil',SO]].forEach(([n,c],i)=>{rect(PX+60+i*130,PY+650,26,26,c,lu,4);txt(PX+94+i*130,PY+672,n,{s:22,o:lu})});chip(PX+PW/2,PY+760,'land use classification','#c9a7ff',lu,28)}
+  q=pp(9);panel(q,'G · Application',OR);wline(PX+30,PY+130,'the information solves a real problem',t,CU.g_app,{s:26,o:q});
+  ['crop monitoring','flood mapping','urban planning','groundwater exploration','highway alignment: terrain study'].forEach((s,i)=>{const a=sm(CU.g_list+i*1.0,CU.g_list+.5+i*1.0,t)*q;chip(PX+PW/2,PY+250+i*105,s,[GR,WA,'#c9ced6',TE,AM][i],a,30)})}
+ // ---- summary ----
+ if(t>=S[10]-.3&&t<S[11]+.3){const o=sm(S[10]-.3,S[10]+.3,t)*(1-sm(S[11]-.3,S[11]+.3,t));txt(960,180,'The remote sensing chain',{a:'middle',s:64,w:900,c:AM,o});
+  STEPS.forEach(([L,n],i)=>{const x=150+i*270,p=sm(CU.sum+i*.9,CU.sum+.5+i*.9,t)*o;rect(x-110,430,220,170,'rgba(8,13,26,.85)',p,20,`stroke="${AM}" stroke-width="3"`);txt(x,500,L,{a:'middle',s:60,w:900,c:OR,o:p});txt(x,560,n,{a:'middle',s:26,w:700,o:p});if(i<6)arrow(x+112,515,x+158,515,AM,5,p)});
+  const fl=sm(CU.sum_flow-.2,CU.sum_flow+.6,t)*o;txt(960,740,'sun → target → sensor → the map in your hand',{a:'middle',s:44,w:800,c:TE,o:fl})}
+ // ---- your turn ----
+ if(t>=S[11]-.3){const o=sm(S[11]-.3,S[11]+.4,t)*(1-sm(CU.end-.2,CU.end+.4,t));txt(960,140,'YOUR TURN',{a:'middle',s:72,w:900,c:OR,o});
+  for(const[x,y,s]of[[600,380,1],[900,330,1.3],[1250,390,1.1],[1450,350,.9]]){G.push(`<g opacity="${o}" transform="translate(${x},${y}) scale(${s})"><circle cx="0" cy="0" r="60" fill="#7d8796"/><circle cx="60" cy="10" r="50" fill="#7d8796"/><circle cx="-60" cy="12" r="46" fill="#7d8796"/><rect x="-100" y="10" width="200" height="50" fill="#7d8796"/></g>`);for(let r=0;r<5;r++)ln(x-60+r*30,y+70,x-75+r*30,y+120,'#9fd3f0',3,o)}
+  rect(300,640,1320,200,'rgba(47,127,208,.75)',o,20);txt(960,750,'flood in Kerala, under monsoon clouds',{a:'middle',s:40,w:800,o});
+  txt(960,930,'Passive sensor or active sensor?',{a:'middle',s:56,w:900,c:AM,o:o*sm(CU.yt+.6,CU.yt+1.2,t)})}
+ // ---- end card ----
+ if(t>=CU.end-.2){const e=sm(CU.end-.2,CU.end+.4,t);rect(0,0,1920,1080,INK,e);G.push(`<image href="../wm/iqra_big.png" x="${960-267}" y="260" width="534" height="192" opacity="${e}"/>`);
+  txt(960,560,'Engineering Guide · Surveying',{a:'middle',s:70,w:900,c:IV,o:e});const lk=sm(CU.end+.5,CU.end+1.1,t);rect(560,640,800,150,OR,lk,75);txt(960,712,'Like &amp; Subscribe',{a:'middle',s:56,w:900,c:'#fff',o:lk});txt(960,762,'for more Engineering Guide videos',{a:'middle',s:34,w:600,c:'#fff',o:lk})}
+ G.push(`<rect x="0" y="1072" width="${cl(t/T_END)*1920}" height="8" fill="${OR}"/>`);
+ document.getElementById('v').innerHTML=G.join('');return true}
+window.renderAt=render;
+</script></body></html>
