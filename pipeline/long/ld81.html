@@ -1,0 +1,180 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#15171A;overflow:hidden}
+svg{display:block}
+</style></head><body>
+<svg id="v" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const CU=window.CUES||{};              // cue times from cues.json (injected)
+const S=CU.S, T_END=S[S.length-1];
+const INK='#15171A',IV='#F4F2EE',OR='#FF5A2A',TE='#3DD6C6',AM='#FFB020',BD='#1F3B30',CH='#EDEBE3',DIM='#9FB3A8';
+const cl=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const sm=(a,b,t)=>{const x=cl((t-a)/(b-a));return x*x*(3-2*x)};
+const sub=s=>`<tspan baseline-shift="sub" font-size="68%">${s}</tspan>`;
+const sup=s=>`<tspan baseline-shift="super" font-size="68%">${s}</tspan>`;
+let G=[];
+const txt=(x,y,s,o={})=>G.push(`<text x="${x}" y="${y}" fill="${o.c||CH}" font-family="Inter" font-weight="${o.w||600}" font-size="${o.s||44}" text-anchor="${o.a||'start'}" opacity="${o.o??1}">${s}</text>`);
+const ln=(x1,y1,x2,y2,c,w=4,o=1,d='')=>G.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}" opacity="${o}" stroke-linecap="round" ${d?`stroke-dasharray="${d}"`:''}/>`);
+const pth=(d,c,w=4,o=1,f='none',dash='')=>G.push(`<path d="${d}" stroke="${c}" stroke-width="${w}" fill="${f}" opacity="${o}" stroke-linejoin="round" stroke-linecap="round" ${dash?`stroke-dasharray="${dash}"`:''}/>`);
+function arrow(x1,y1,x2,y2,c,w=6,o=1){if(o<=0)return;const a=Math.atan2(y2-y1,x2-x1),h=w*3.2;
+ ln(x1,y1,x2-Math.cos(a)*h*0.8,y2-Math.sin(a)*h*0.8,c,w,o);
+ G.push(`<path d="M${x2},${y2} L${x2-h*Math.cos(a)+h*0.6*Math.sin(a)},${y2-h*Math.sin(a)-h*0.6*Math.cos(a)} L${x2-h*Math.cos(a)-h*0.6*Math.sin(a)},${y2-h*Math.sin(a)+h*0.6*Math.cos(a)}Z" fill="${c}" opacity="${o}"/>`)}
+// a board line written left to right: the text, then a board-coloured cover that slides off
+function wline(x,y,s,t,t0,o={}){const p=sm(t0,t0+0.9,t);if(p<=0)return;txt(x,y,s,o);
+ if(p<1){const wd=o.wd||820;G.push(`<rect x="${x-6+p*(wd+12)}" y="${y-(o.s||44)}" width="${wd+20}" height="${(o.s||44)*1.45}" fill="${o.bg||BD}"/>`)}}
+function boxed(x,y,w,h,t,t0,c=OR){const p=sm(t0,t0+0.6,t);if(p>0)G.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="none" stroke="${c}" stroke-width="4" opacity="${p}" stroke-dasharray="${2*(w+h)}" stroke-dashoffset="${(1-p)*2*(w+h)}"/>`)}
+// beam pieces. x0..x1 beam, y = top of beam
+function wall(x,y,h,c,o=1){G.push(`<rect x="${x-26}" y="${y-h/2}" width="26" height="${h}" fill="${c}" opacity="${o*0.35}"/>`);ln(x,y-h/2,x,y+h/2,c,5,o);
+ for(let i=0;i<7;i++)ln(x-26,y-h/2+10+i*(h-20)/6,x,y-h/2+i*(h-20)/6-6,c,2.5,o*0.8)}
+function prop(x,y,c,o=1,dy=0){if(o<=0)return;pth(`M${x},${y+dy} L${x-26},${y+44+dy} L${x+26},${y+44+dy}Z`,c,4,o,'none');ln(x-40,y+48+dy,x+40,y+48+dy,c,4,o);
+ for(let i=0;i<5;i++)ln(x-36+i*18,y+48+dy,x-46+i*18,y+62+dy,c,2.5,o*0.8)}
+function beam(x0,x1,y,c,o=1,th=22){G.push(`<rect x="${x0}" y="${y}" width="${x1-x0}" height="${th}" rx="4" fill="${c}" opacity="${o}"/>`)}
+function udl(x0,x1,y,c,o=1,n=13,h=50){if(o<=0)return;ln(x0,y-h,x1,y-h,c,4,o);for(let i=0;i<n;i++){const x=x0+(x1-x0)*i/(n-1);arrow(x,y-h,x,y-4,c,3.4,o)}}
+function curvedM(x,y,r,c,o,lab){if(o<=0)return;pth(`M${x+r*0.2},${y-r} A${r},${r} 0 1 0 ${x+r},${y+r*0.15}`,c,5,o);arrow(x+r*1.02,y+r*0.05,x+r*0.98,y+r*0.32,c,5,o);if(lab)txt(x-r-70,y-r+6,lab,{c,s:36,o})}
+// step strip and header on the board
+const STEPS=['Degree of indeterminacy','Select and remove the redundant','Moment M from the external load','Unit load at B: moment m','Deflection Δ'+sub('B0'),'Flexibility δ'+sub('BB'),'Compatibility: find R'+sub('B'),'Remaining reactions by statics'];
+function board(t,o=1){G.push(`<rect x="0" y="0" width="1920" height="1080" fill="#5b3f26" opacity="${o}"/><rect x="26" y="26" width="1868" height="1028" rx="10" fill="${BD}" opacity="${o}"/>`)}
+function strip(t,cur){for(let i=0;i<8;i++){const x=150+i*210,on=i+1===cur,done=i+1<cur;
+ G.push(`<rect x="${x}" y="62" width="186" height="46" rx="23" fill="${on?OR:done?'#2E5747':'none'}" stroke="${on?OR:'#4F7464'}" stroke-width="3"/>`);
+ txt(x+93,96,(done?'✓ ':'')+'Step '+(i+1),{a:'middle',s:26,w:700,c:on?INK:done?CH:DIM})}}
+function header(t,n,t0){const p=sm(t0,t0+0.5,t);txt(130,200,'Step '+n+' · '+STEPS[n-1],{s:56,w:800,c:AM,o:p});ln(130,224,130+p*900,224,AM,3,0.6)}
+// the propped cantilever on the board: A at xa, B at xb
+const XA=280,XB=820,YB=560,PX=(XB-XA)/6;
+function pc(t,o={}){const c=o.c||CH;wall(XA,YB+11,150,c,o.o??1);beam(XA,XB,YB,o.bc||'#D9D4C7',o.o??1);if((o.prop??1)>0)prop(XB,YB+22,c,o.prop??1,o.dy||0);
+ txt(XA-10,YB+130,'A',{s:40,w:800,a:'middle',c,o:o.o??1});txt(XB,YB+(o.prop?140:130),'B',{s:40,w:800,a:'middle',c,o:o.o??1})}
+function render(t){G=[];
+ const sc=k=>t>=S[k]&&t<S[k+1];
+ // ---------- scene 0: hook ----------
+ if(t<S[2]+0.6){
+  G.push(`<rect width="1920" height="1080" fill="${INK}"/>`);
+  if(t<S[1]+0.2){const o=1-sm(S[1]-0.3,S[1]+0.2,t);
+   const y=560,x0=260,x1=1660,sup=[x0,x0+470,x0+930,x1];const pop=sm(0.2,1.0,t);
+   txt(960,170,'Have you ever wondered…',{a:'middle',s:44,w:600,c:'#9aa3ad',o:o*sm(0.1,0.6,t)});
+   txt(960,250,'How are reactions found for a beam with 3 or 4 supports?',{a:'middle',s:56,w:800,c:IV,o:o*sm(CU.h_q-1.2,CU.h_q-0.4,t)});
+   beam(x0,x1,y,'#D9D4C7',o*pop);udl(x0,x1,y,OR,o*sm(0.6,1.4,t),24,60);
+   sup.forEach((x,i)=>{const q=sm(CU.h_q-0.4+i*0.35,CU.h_q+0.2+i*0.35,t);
+    pth(`M${x},${y+22} L${x-26},${y+66} L${x+26},${y+66}Z`,IV,4,o*pop);ln(x-40,y+70,x+40,y+70,IV,4,o*pop);
+    arrow(x,y+190,x,y+80,TE,7,o*q);txt(x,y+250,'R'+sub(i+1)+' = ?',{a:'middle',s:44,w:800,c:TE,o:o*q})});
+   const e=sm(CU.h_eq-0.2,CU.h_eq+0.5,t);
+   G.push(`<rect x="560" y="880" width="800" height="90" rx="45" fill="#262A30" opacity="${o*e}"/>`);
+   txt(960,940,'Statics gives only 3 equations: ΣH = 0, ΣV = 0, ΣM = 0',{a:'middle',s:36,w:700,c:AM,o:o*e});
+   const ti=sm(CU.h_title-0.2,CU.h_title+0.6,t);
+   if(ti>0){G.push(`<rect width="1920" height="1080" fill="${INK}" opacity="${ti*0.88}"/>`);
+    txt(960,470,'Consistent Deformation Method',{a:'middle',s:96,w:900,c:IV,o:ti});
+    txt(960,580,'8 steps · Structural Analysis I',{a:'middle',s:48,w:700,c:OR,o:ti})}
+  }
+  // ---------- scene 1: the beam ----------
+  if(t>=S[1]-0.3&&t<S[2]+0.6){const o=sm(S[1]-0.3,S[1]+0.3,t)*(1-sm(S[2]-0.4,S[2]+0.3,t));
+   const xa=420,xb=1500,y=560,lab=(k,dt=0)=>sm(CU[k]+dt-0.2,CU[k]+dt+0.5,t)*o;
+   wall(xa,y+11,190,IV,o);beam(xa,xb,y,'#D9D4C7',o,26);prop(xb,y+26,IV,o*lab('b_B'));
+   txt(xa-60,y+150,'A',{s:52,w:800,c:IV,o});txt(xb,y+170,'B',{s:52,w:800,a:'middle',c:IV,o:lab('b_B')});
+   txt(xa-40,y+60,'Fixed support',{s:36,a:'end',c:'#9aa3ad',o:lab('b_A')});txt(xb,y+250,'Prop',{s:36,a:'middle',c:'#9aa3ad',o:lab('b_B')});
+   const L=lab('b_L');if(L>0){ln(xa,y+300,xb,y+300,IV,3,L);ln(xa,y+285,xa,y+315,IV,3,L);ln(xb,y+285,xb,y+315,IV,3,L);G.push(`<rect x="${(xa+xb)/2-110}" y="${y+272}" width="220" height="56" fill="${INK}" opacity="${L}"/>`);txt((xa+xb)/2,y+314,'L = 6 m',{a:'middle',s:42,w:800,c:IV,o:L})}
+   const w=lab('b_w');udl(xa,xb,y,OR,w,22,70);txt((xa+xb)/2,y-100,'w = 10 kN/m (UDL)',{a:'middle',s:44,w:800,c:OR,o:w});
+   txt((xa+xb)/2,y-190,'EI = 20000 kN·m'+sup('2'),{a:'middle',s:44,w:800,c:AM,o:lab('b_EI')});
+   const r=lab('b_R');arrow(xa+40,y+250,xa+40,y+60,TE,8,r);txt(xa+70,y+215,'R'+sub('A')+' = ?',{s:44,w:800,c:TE,o:r});
+   arrow(xb+120,y+250,xb+120,y+80,TE,8,r);txt(xb+150,y+215,'R'+sub('B')+' = ?',{s:44,w:800,c:TE,o:r});
+   txt(960,140,'A propped cantilever',{a:'middle',s:60,w:800,c:IV,o});
+   const bw=sm(CU.b_board,S[2],t);if(bw>0)G.push(`<rect x="${1920-bw*1920}" y="0" width="1920" height="1080" fill="${BD}"/>`)}
+ }
+ // ---------- board scenes ----------
+ if(t>=S[2]-0.05&&t<S[12]){board(t);
+  const k=[2,3,4,5,6,7,8,9].findIndex((kk,i)=>t>=S[kk]&&t<S[kk+1]);
+  if(t<S[10]){const n=k<0?1:k+1;strip(t,n);header(t,n,S[n+1]);
+   ln(900,270,900,980,'#2F5244',3);
+   const R=960,Y=v=>320+v*92;
+   if(n===1){pc(t,{prop:1});const q=sm(CU.s1_1-0.3,CU.s1_1+0.4,t);
+     arrow(XA+60,YB+260,XA+60,YB+40,TE,6,q);txt(XA+80,YB+230,'R'+sub('A'),{s:38,w:800,c:TE,o:q});
+     arrow(XA-170,YB+11,XA-40,YB+11,TE,6,q);txt(XA-190,YB-20,'H'+sub('A'),{s:38,w:800,c:TE,o:q});
+     curvedM(XA+20,YB-90,46,TE,q,'M'+sub('A'));
+     arrow(XB+55,YB+260,XB+55,YB+50,TE,6,q);txt(XB+20,YB+300,'R'+sub('B'),{s:38,w:800,c:TE,o:q});
+     wline(R,Y(0),'Unknowns: R'+sub('A')+', H'+sub('A')+', M'+sub('A')+', R'+sub('B'),t,CU.s1_1);
+     wline(R,Y(1),'Number of unknowns = 4',t,CU.s1_2);
+     wline(R,Y(2.3),'Equations of statics:',t,CU.s1_3);
+     wline(R+40,Y(3.3),'ΣH = 0,  ΣV = 0,  ΣM = 0  →  3',t,CU.s1_3+2.4);
+     wline(R,Y(5),'Degree of indeterminacy',t,CU.s1_4,{c:AM});
+     wline(R,Y(6),'= 4 − 3 = 1',t,CU.s1_4+0.8,{s:60,w:800,c:AM});boxed(R-20,Y(4.35),800,Y(6.3)-Y(4.35),t,CU.s1_4+1.6)}
+   if(n===2){const f=sm(CU.s2_2-0.2,CU.s2_2+0.8,t);pc(t,{prop:1-f});
+     const ci=sm(CU.s2_1-0.2,CU.s2_1+0.5,t);if(ci>0&&f<1){G.push(`<circle cx="${XB}" cy="${YB+55}" r="70" fill="none" stroke="${OR}" stroke-width="5" opacity="${ci*(1-f)}"/>`)}
+     txt(XB,YB-80,'cantilever',{a:'middle',s:36,c:AM,o:sm(CU.s2_3-0.3,CU.s2_3+0.4,t)});
+     wline(R,Y(0),'Redundant: R'+sub('B')+' (the prop)',t,CU.s2_1);
+     wline(R,Y(1.3),'Remove the prop at B',t,CU.s2_2);
+     wline(R,Y(2.6),'Primary (released) structure:',t,CU.s2_3,{c:AM});
+     wline(R+40,Y(3.6),'a cantilever, statically determinate',t,CU.s2_3+1)}
+   if(n===3){pc(t,{prop:0});udl(XA,XB,YB,OR,1,13,56);
+     const q=sm(CU.s3_1-0.2,CU.s3_1+0.5,t),xs=XB-2.4*PX;
+     if(q>0){ln(xs,YB-110,xs,YB+90,AM,4,q,'12 10');ln(xs,YB+110,XB,YB+110,AM,3,q);arrow(xs+40,YB+110,xs,YB+110,AM,3,q);arrow(XB-40,YB+110,XB,YB+110,AM,3,q);txt((xs+XB)/2,YB+160,'x',{a:'middle',s:44,w:800,c:AM,o:q})}
+     const r=sm(CU.s3_2-0.2,CU.s3_2+0.5,t);if(r>0){G.push(`<rect x="${xs}" y="${YB-62}" width="${XB-xs}" height="90" fill="${OR}" opacity="${0.16*r}"/>`);arrow((xs+XB)/2,YB-200,(xs+XB)/2,YB-70,OR,7,r);txt((xs+XB)/2+20,YB-215,'w·x at x/2',{a:'middle',s:34,w:800,c:OR,o:r})}
+     const d=sm(CU.s3_3+0.6,CU.s3_3+2.2,t);if(d>0){const y0=YB+250;ln(XA,y0,XB,y0,DIM,3);let pp=`M${XB},${y0}`;for(let i=0;i<=40;i++){const xx=6*i/40;if(i/40>d)break;pp+=` L${XB-xx*PX},${y0+xx*xx*5*0.95}`}pth(pp,OR,5);
+       if(d>=1){ln(XA,y0,XA,y0+171,OR,4);txt(XA-16,y0+150,'−180',{s:34,w:800,a:'end',c:OR})}txt(XB-200,y0-16,'M (hogging)',{s:30,c:DIM,o:d})}
+     wline(R,Y(0),'x measured from the free end B',t,CU.s3_1);
+     wline(R,Y(1),'Load on the piece = w·x, acting at x/2',t,CU.s3_2);
+     wline(R,Y(2.4),'M = − w x'+sup('2')+' / 2',t,CU.s3_3,{s:56,w:800,c:AM});
+     wline(R,Y(3.5),'M = − 5 x'+sup('2')+'   (kN·m)',t,CU.s3_3+3.2,{s:56,w:800,c:AM});
+     wline(R,Y(4.8),'At A (x = 6 m): M = − 180 kN·m',t,CU.s3_3+4.6);
+     wline(R,Y(6),'Sign: sagging +, hogging −',t,CU.s3_4,{c:DIM})}
+   if(n===4){const f=1-sm(CU.s4_1-0.2,CU.s4_1+0.8,t);pc(t,{prop:0});udl(XA,XB,YB,OR,f,13,56);
+     const u=sm(CU.s4_2+3,CU.s4_2+3.8,t);arrow(XB,YB+240,XB,YB+30,TE,7,u);txt(XB+20,YB+210,'1 kN',{s:40,w:800,c:TE,o:u});
+     const d=sm(CU.s4_3-0.2,CU.s4_3+1.4,t);if(d>0){const y0=YB+300;ln(XA,y0,XB,y0,DIM,3);pth(`M${XB},${y0} L${XB-d*6*PX},${y0-d*6*14}`,TE,5);if(d>=1){ln(XA,y0,XA,y0-84,TE,4);txt(XA+16,y0-96,'+6',{s:34,w:800,c:TE})}txt(XB-150,y0+44,'m',{s:34,w:800,c:TE,o:d})}
+     wline(R,Y(0),'Remove all the external loads',t,CU.s4_1);
+     wline(R,Y(1.3),'Put a unit load, 1 kN, upward at B',t,CU.s4_2);
+     wline(R,Y(2.6),'Its bending moment = m',t,CU.s4_2+5.4);
+     wline(R,Y(3.9),'m = + x',t,CU.s4_3,{s:60,w:800,c:TE});
+     wline(R,Y(5.1),'At A (x = 6 m): m = + 6 kN·m',t,CU.s4_3+1.2)}
+   if(n===5){pc(t,{prop:0});udl(XA,XB,YB,OR,1,13,56);
+     const d=sm(CU.s5_6-0.4,CU.s5_6+1.2,t);if(d>0){let pp=`M${XA},${YB+11}`;for(let i=1;i<=30;i++){const xx=i/30;pp+=` L${XA+xx*(XB-XA)},${YB+11+d*120*(xx*xx*(6-4*xx+xx*xx))/3}`}pth(pp,AM,4,1,'none','14 10');arrow(XB+40,YB+11,XB+40,YB+131*d,AM,5,d);txt(XB-30,YB+190,'81 mm',{s:36,w:800,a:'end',c:AM,o:d})}
+     wline(R,Y(0),'Δ'+sub('B0')+' = ∫ M m dx / EI   (0 to L)',t,CU.s5_1);
+     wline(R,Y(1.1),'= ∫ (−5x'+sup('2')+')(x) dx / EI = ∫ −5x'+sup('3')+' dx / EI',t,CU.s5_2);
+     wline(R,Y(2.2),'= [ −5x'+sup('4')+' / 4 ] from 0 to 6, ÷ EI',t,CU.s5_3);
+     wline(R,Y(3.3),'= − 1620 / EI',t,CU.s5_4);
+     wline(R,Y(4.4),'= − 1620 / 20000 = − 0.081 m',t,CU.s5_5);
+     wline(R,Y(5.7),'Δ'+sub('B0')+' = 81 mm downward',t,CU.s5_6,{s:58,w:800,c:AM});boxed(R-20,Y(5.05),700,100,t,CU.s5_6+1)}
+   if(n===6){pc(t,{prop:0});const u=1;arrow(XB,YB+240,XB,YB+30,TE,7,u);txt(XB+20,YB+210,'1 kN',{s:40,w:800,c:TE});
+     const d=sm(CU.s6_3-0.4,CU.s6_3+1,t);if(d>0){let pp=`M${XA},${YB+11}`;for(let i=1;i<=30;i++){const xx=i/30;pp+=` L${XA+xx*(XB-XA)},${YB+11-d*60*xx*xx*(3-xx)/2}`}pth(pp,TE,4,1,'none','14 10');txt(XB-210,YB-80,'δ'+sub('BB')+' = 3.6 mm',{s:36,w:800,c:TE,o:d})}
+     wline(R,Y(0),'δ'+sub('BB')+' = ∫ m'+sup('2')+' dx / EI   (0 to L)',t,CU.s6_1);
+     wline(R,Y(1.1),'= ∫ x'+sup('2')+' dx / EI = [ x'+sup('3')+' / 3 ] from 0 to 6, ÷ EI',t,CU.s6_2);
+     wline(R,Y(2.2),'= 72 / EI = 72 / 20000',t,CU.s6_2+2.4);
+     wline(R,Y(3.3),'= 0.0036 m per kN',t,CU.s6_3);
+     wline(R,Y(4.6),'δ'+sub('BB')+' = 3.6 mm per kN',t,CU.s6_3+4.9,{s:58,w:800,c:TE});
+     wline(R,Y(5.8),'Check: L'+sup('3')+' / 3EI = 216 / 60000 = 0.0036 m',t,CU.s6_4,{c:DIM})}
+   if(n===7){const mini=(x,y,lab,c,dy,sgn)=>{wall(x,y+5,70,CH);beam(x,x+300,y,'#D9D4C7',1,12);pth(`M${x},${y+6} Q${x+200},${y+6} ${x+300},${y+6+dy}`,c,4,1,'none','10 8');txt(x+150,y+90,lab,{a:'middle',s:30,w:700,c})};
+     const a=sm(CU.s7_1-0.2,CU.s7_1+0.6,t);if(a>0){
+      G.push(`<g opacity="${a}">`);mini(160,400,'load: 81 mm ↓',AM,60);txt(510,425,'+',{s:60,w:800,c:CH,a:'middle'});mini(580,400,'R'+sub('B')+': 3.6 R'+sub('B')+' mm ↑',TE,-60);
+      txt(330,620,'=',{s:60,w:800,c:CH,a:'middle'});wall(360,700,70,CH);beam(360,660,695,'#D9D4C7',1,12);prop(660,707,CH);txt(510,830,'real beam: 0 at B',{a:'middle',s:30,w:700,c:CH});G.push('</g>')}
+     wline(R,Y(0),'Compatibility: deflection at B = 0',t,CU.s7_1);
+     wline(R,Y(1.2),'Δ'+sub('B0')+' + R'+sub('B')+' · δ'+sub('BB')+' = 0',t,CU.s7_2,{s:56,w:800});
+     wline(R,Y(2.4),'− 81 + 3.6 R'+sub('B')+' = 0',t,CU.s7_3,{s:56,w:800});
+     wline(R,Y(3.6),'R'+sub('B')+' = 81 / 3.6',t,CU.s7_4,{s:56,w:800});
+     wline(R,Y(5),'R'+sub('B')+' = 22.5 kN  upward',t,CU.s7_4+2,{s:64,w:900,c:OR});boxed(R-20,Y(4.25),720,108,t,CU.s7_5)}
+   if(n===8){pc(t,{prop:1});udl(XA,XB,YB,OR,1,13,56);
+     const q=k=>sm(CU[k]+0.4,CU[k]+1.1,t);
+     arrow(XB+55,YB+260,XB+55,YB+50,TE,6,1);txt(XB+20,YB+300,'22.5 kN',{s:34,w:800,c:TE});
+     arrow(XA+60,YB+260,XA+60,YB+40,TE,6,q('s8_2'));txt(XA+80,YB+250,'37.5 kN',{s:34,w:800,c:TE,o:q('s8_2')});
+     txt(XA-150,YB+80,'H'+sub('A')+' = 0',{s:34,w:800,c:TE,o:q('s8_3')});
+     curvedM(XA+20,YB-120,46,TE,q('s8_5'),'45 kN·m');
+     wline(R,Y(0),'Total load = wL = 10 × 6 = 60 kN',t,CU.s8_1);
+     wline(R,Y(1.2),'ΣV = 0:  R'+sub('A')+' = 60 − 22.5 = 37.5 kN',t,CU.s8_2);
+     wline(R,Y(2.4),'ΣH = 0:  H'+sub('A')+' = 0',t,CU.s8_3);
+     wline(R,Y(3.6),'ΣM'+sub('A')+' = 0:  M'+sub('A')+' = wL'+sup('2')+'/2 − R'+sub('B')+'·L',t,CU.s8_4);
+     wline(R,Y(4.8),'M'+sub('A')+' = 180 − 135 = 45 kN·m',t,CU.s8_5,{s:58,w:800,c:OR});boxed(R-20,Y(4.1),720,100,t,CU.s8_5+1.2)}
+  }else{ // summary and your turn
+   if(t<S[11]){txt(960,150,'The 8 steps',{a:'middle',s:64,w:900,c:AM});
+     STEPS.forEach((s,i)=>{const t0=CU.sum+i*((S[11]-CU.sum-5)/8);const p=sm(t0,t0+0.5,t);const x=i<4?160:1000,y=300+(i%4)*130;
+      G.push(`<circle cx="${x}" cy="${y-14}" r="30" fill="${OR}" opacity="${p}"/>`);txt(x,y-2,String(i+1),{a:'middle',s:34,w:900,c:INK,o:p});txt(x+56,y,s,{s:40,w:700,o:p})});
+     const a=sm(CU.apps-0.2,CU.apps+0.6,t);['Balconies','Continuous beams','Portal frames'].forEach((s,i)=>{G.push(`<rect x="${380+i*400}" y="880" width="360" height="80" rx="40" fill="#2E5747" opacity="${a}"/>`);txt(560+i*400,933,s,{a:'middle',s:34,w:700,o:a})})}
+   else{const o=1-sm(CU.end-0.2,CU.end+0.4,t);
+     txt(960,150,'YOUR TURN',{a:'middle',s:72,w:900,c:OR,o});
+     G.push(`<g opacity="${o}">`);pc(t,{prop:0});const dd=sm(CU.yt+0.5,CU.yt+1.8,t)*40;prop(XB,YB+22,CH,0.35);prop(XB,YB+22,AM,1,dd);if(dd>0){arrow(XB+90,YB+40,XB+90,YB+40+dd+10,AM,4,1);txt(XB+110,YB+70,'5 mm',{s:34,w:800,c:AM})}G.push('</g>');
+     txt(1420,500,'Prop B settles 5 mm.',{a:'middle',s:52,w:800,o});
+     txt(1420,600,'R'+sub('B')+': increase or decrease?',{a:'middle',s:52,w:800,c:AM,o});}
+  }
+ }
+ // ---------- end card ----------
+ if(t>=S[11]&&t>=CU.end-0.2){const e=sm(CU.end-0.2,CU.end+0.4,t);G.push(`<rect width="1920" height="1080" fill="${INK}" opacity="${e}"/>`);
+  G.push(`<image href="iqra_logo.png" x="${960-267}" y="300" width="534" height="192" opacity="${e}"/>`);
+  txt(960,600,'Engineering Guide',{a:'middle',s:84,w:900,c:IV,o:e});
+  txt(960,690,'Try the Consistent Deformation lesson in the app',{a:'middle',s:44,w:600,c:OR,o:e})}
+ // progress bar
+ G.push(`<rect x="0" y="1072" width="${cl(t/T_END)*1920}" height="8" fill="${OR}"/>`);
+ document.getElementById('v').innerHTML=G.join('');return true}
+window.renderAt=render;
+</script></body></html>
